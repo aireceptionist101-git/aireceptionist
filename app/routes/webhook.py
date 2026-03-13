@@ -32,22 +32,28 @@ def receive_webhook(
             )
 
     event_type = payload.message.type
+    call_id = payload.message.call.id if payload.message.call else "N/A"
+
+    logger.info("Webhook received | event=%s | call_id=%s", event_type, call_id)
 
     if event_type not in HANDLED_EVENT_TYPES:
-        logger.info("Ignoring webhook event type: %s", event_type)
+        logger.info("Skipping event | event=%s | call_id=%s (not in handled types)", event_type, call_id)
         return {"received": True, "processed": False, "type": event_type}
 
     if payload.message.call is None:
+        logger.warning("Rejected event | event=%s | reason=missing call data", event_type)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="end-of-call-report missing call data",
         )
 
+    logger.info("Processing end-of-call-report | call_id=%s", call_id)
+
     try:
         report = upsert_call_report(db, payload)
-        logger.info("Upserted call report: %s", report.call_id)
+        logger.info("Saved to DB | call_id=%s | report_id=%s", report.call_id, report.id)
     except Exception as exc:
-        logger.exception("Failed to persist call report")
+        logger.exception("DB save failed | call_id=%s | error=%s", call_id, str(exc))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to persist call report",
