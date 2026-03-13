@@ -51,7 +51,7 @@ def receive_webhook(
 
     try:
         report = upsert_call_report(db, payload)
-        logger.info("Saved to DB | call_id=%s | report_id=%s", report.call_id, report.id)
+        logger.info("Saved to DB | call_id=%s", report.call_id)
     except Exception as exc:
         logger.exception("DB save failed | call_id=%s | error=%s", call_id, str(exc))
         raise HTTPException(
