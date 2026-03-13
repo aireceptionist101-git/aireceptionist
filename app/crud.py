@@ -23,7 +23,6 @@ def upsert_call_report(db: Session, payload: VapiWebhookPayload) -> CallReport:
     def to_aest(dt: datetime | None) -> datetime | None:
         if dt is None:
             return None
-        # ensure timezone-aware before converting
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)
         return dt.astimezone(AEST)
@@ -32,16 +31,17 @@ def upsert_call_report(db: Session, payload: VapiWebhookPayload) -> CallReport:
         "call_id": call.id,
         "org_id": call.orgId,
         "assistant_id": call.assistantId,
-        "status": call.status,
-        "started_at": to_aest(call.startedAt),
-        "ended_at": to_aest(call.endedAt),
-        "duration_seconds": call.duration,
-        "cost": call.cost,
-        "ended_reason": call.endedReason,
-        "transcript": artifact.transcript,
-        "recording_url": artifact.recordingUrl,
-        "stereo_recording_url": artifact.stereoRecordingUrl,
-        "summary": analysis.summary,
+        "status": "ended",
+        "started_at": to_aest(msg.startedAt),
+        "ended_at": to_aest(msg.endedAt),
+        "duration_seconds": msg.durationSeconds,
+        "cost": msg.cost,
+        "ended_reason": msg.endedReason,
+        # Prefer message-level fields, fall back to artifact
+        "transcript": msg.transcript or artifact.transcript,
+        "recording_url": msg.recordingUrl or artifact.recordingUrl,
+        "stereo_recording_url": msg.stereoRecordingUrl or artifact.stereoRecordingUrl,
+        "summary": msg.summary or analysis.summary,
         "success_evaluation": analysis.successEvaluation,
         "structured_data": analysis.structuredData,
         "updated_at": datetime.now(AEST),

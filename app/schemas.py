@@ -31,11 +31,31 @@ class VapiAnalysisPayload(BaseModel):
     structuredData: dict[str, Any] | None = None
 
 
+class VapiCostBreakdown(BaseModel):
+    stt: float | None = None
+    llm: float | None = None
+    tts: float | None = None
+    vapi: float | None = None
+    total: float | None = None
+
 class VapiMessagePayload(BaseModel):
     type: str
     call: VapiCallPayload | None = None
     artifact: VapiArtifactPayload | None = None
     analysis: VapiAnalysisPayload | None = None
+    # Top-level message fields (the actual call data)
+    startedAt: datetime | None = None
+    endedAt: datetime | None = None
+    endedReason: str | None = None
+    cost: float | None = None
+    costBreakdown: VapiCostBreakdown | None = None
+    durationSeconds: float | None = None
+    durationMs: float | None = None
+    durationMinutes: float | None = None
+    transcript: str | None = None
+    summary: str | None = None
+    recordingUrl: str | None = None
+    stereoRecordingUrl: str | None = None
 
 
 class VapiWebhookPayload(BaseModel):
