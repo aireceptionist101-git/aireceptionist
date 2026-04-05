@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.auth import require_api_key
 from app.crud import get_call_reports
 from app.database import get_db
 from app.models import CallReport
@@ -23,6 +24,7 @@ def list_calls(
     date_from: datetime | None = Query(default=None, description="Filter calls started on or after this datetime (ISO 8601)"),
     date_to: datetime | None = Query(default=None, description="Filter calls started on or before this datetime (ISO 8601)"),
     db: Session = Depends(get_db),
+    _api_key: str = Depends(require_api_key),
 ):
     """
     Returns a paginated list of call reports for the dashboard.
@@ -60,7 +62,7 @@ def list_calls(
 
 
 @router.get("/{call_id}", response_model=CallReportResponse)
-def get_call(call_id: str, db: Session = Depends(get_db)):
+def get_call(call_id: str, db: Session = Depends(get_db), _api_key: str = Depends(require_api_key)):
     """Returns a single call report by Vapi call ID."""
     record = db.execute(
         select(CallReport).where(CallReport.call_id == call_id)

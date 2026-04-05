@@ -18,7 +18,18 @@ async def receive_webhook(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    raw_body = await request.json()
+    body = await request.body()
+    if not body:
+        return {"received": True, "processed": False, "reason": "empty body"}
+
+    try:
+        raw_body = await request.json()
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid JSON body",
+        )
+
     message = raw_body.get("message", {})
     event_type = message.get("type", "unknown")
     call_id = message.get("call", {}).get("id", "N/A")
@@ -34,7 +45,14 @@ async def receive_webhook(
     if event_type not in HANDLED_EVENT_TYPES:
         return {"received": True, "processed": False, "type": event_type}
 
-    payload = VapiWebhookPayload(**raw_body)
+    try:
+        payload = VapiWebhookPayload(**raw_body)
+    except Exception as exc:
+        logger.exception("Payload validation failed | call_id=%s | error=%s", call_id, str(exc))
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Invalid webhook payload: {str(exc)[:200]}",
+        ) from exc
 
     if payload.message.call is None:
         logger.warning("end-of-call-report missing call data | call_id=%s", call_id)
