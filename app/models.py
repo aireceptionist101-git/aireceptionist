@@ -32,6 +32,16 @@ class CallReport(Base):
     success_evaluation: Mapped[str | None] = mapped_column(String(20), nullable=True)
     structured_data: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
+    # caller info
+    phone_number: Mapped[str | None] = mapped_column(String(50), nullable=True)
+
+    # structured outputs (extracted by Vapi LLM after call)
+    caller_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    sentiment: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    reason_for_call: Mapped[str | None] = mapped_column(Text, nullable=True)
+    transfer_successful: Mapped[bool | None] = mapped_column(nullable=True)
+    transfer_destination: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
     # housekeeping
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

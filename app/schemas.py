@@ -7,6 +7,11 @@ from pydantic import BaseModel
 # Webhook payload schemas (inbound from Vapi.ai)
 # ---------------------------------------------------------------------------
 
+class VapiCustomerPayload(BaseModel):
+    number: str | None = None
+    name: str | None = None
+
+
 class VapiCallPayload(BaseModel):
     id: str
     orgId: str | None = None
@@ -17,12 +22,19 @@ class VapiCallPayload(BaseModel):
     duration: float | None = None
     cost: float | None = None
     endedReason: str | None = None
+    customer: VapiCustomerPayload | None = None
+
+
+class VapiStructuredOutput(BaseModel):
+    name: str
+    result: Any = None
 
 
 class VapiArtifactPayload(BaseModel):
     transcript: str | None = None
     recordingUrl: str | None = None
     stereoRecordingUrl: str | None = None
+    structuredOutputs: dict[str, VapiStructuredOutput] | None = None
 
 
 class VapiAnalysisPayload(BaseModel):
@@ -82,6 +94,12 @@ class CallReportResponse(BaseModel):
     summary: str | None
     success_evaluation: str | None
     structured_data: dict[str, Any] | None
+    phone_number: str | None
+    caller_name: str | None
+    sentiment: str | None
+    reason_for_call: str | None
+    transfer_successful: bool | None
+    transfer_destination: str | None
     created_at: datetime
     updated_at: datetime
 

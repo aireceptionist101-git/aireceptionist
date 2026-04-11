@@ -1,3 +1,4 @@
+import json
 import logging
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
@@ -41,6 +42,14 @@ async def receive_webhook(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Invalid webhook secret",
             )
+
+    # Dump full raw payload to file for local analysis
+    with open("webhook_payloads.log", "a") as f:
+        f.write(f"\n{'='*80}\n")
+        f.write(f"EVENT: {event_type} | CALL_ID: {call_id}\n")
+        f.write(f"{'='*80}\n")
+        f.write(json.dumps(raw_body, indent=2, default=str))
+        f.write("\n")
 
     if event_type not in HANDLED_EVENT_TYPES:
         return {"received": True, "processed": False, "type": event_type}

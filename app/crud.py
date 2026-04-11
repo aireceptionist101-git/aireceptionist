@@ -27,6 +27,19 @@ def upsert_call_report(db: Session, payload: VapiWebhookPayload) -> CallReport:
             dt = dt.replace(tzinfo=timezone.utc)
         return dt.astimezone(AEST)
 
+    # Extract structured outputs by name
+    structured_outputs = artifact.structuredOutputs or {}
+    so = {v.name.lower().replace(" ", "_"): v.result for v in structured_outputs.values()}
+
+    def to_bool(val) -> bool | None:
+        if val is None:
+            return None
+        if isinstance(val, bool):
+            return val
+        if isinstance(val, str):
+            return val.lower() in ("true", "yes", "1")
+        return bool(val)
+
     values = {
         "call_id": call.id,
         "org_id": call.orgId,
@@ -37,13 +50,20 @@ def upsert_call_report(db: Session, payload: VapiWebhookPayload) -> CallReport:
         "duration_seconds": msg.durationSeconds,
         "cost": msg.cost,
         "ended_reason": msg.endedReason,
-        # Prefer message-level fields, fall back to artifact
         "transcript": msg.transcript or artifact.transcript,
         "recording_url": msg.recordingUrl or artifact.recordingUrl,
         "stereo_recording_url": msg.stereoRecordingUrl or artifact.stereoRecordingUrl,
         "summary": msg.summary or analysis.summary,
         "success_evaluation": analysis.successEvaluation,
         "structured_data": analysis.structuredData,
+        # caller info
+        "phone_number": call.customer.number if call.customer else None,
+        # structured outputs
+        "caller_name": so.get("caller_name"),
+        "sentiment": so.get("sentiment"),
+        "reason_for_call": so.get("reason_for_call"),
+        "transfer_successful": to_bool(so.get("transfer_successful")),
+        "transfer_destination": so.get("transfer_destination"),
         "updated_at": datetime.now(AEST),
     }
 
