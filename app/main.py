@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.database import Base, engine
+from app.database import Base, engine, ensure_call_reports_schema
 from app.routes import webhook, calls
 
 logging.basicConfig(
@@ -16,6 +16,7 @@ logging.basicConfig(
 async def lifespan(app: FastAPI):
     # Auto-create tables on startup (use Alembic migrations for production)
     Base.metadata.create_all(bind=engine)
+    ensure_call_reports_schema()
     yield
 
 
